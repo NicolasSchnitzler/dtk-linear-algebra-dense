@@ -1,0 +1,27 @@
+## Version: $Id$
+##
+######################################################################
+##
+### Commentary:
+##
+######################################################################
+##
+### Change Log:
+##
+######################################################################
+##
+### Code:
+
+## ###################################################################
+## Defines:
+## - dtkLinearAlgebraDense_INCLUDE_DIRS
+## ###################################################################
+
+set(dtkLinearAlgebraDense_INCLUDE_DIRS
+  "@CMAKE_CURRENT_SOURCE_DIR@/src"
+  "@CMAKE_CURRENT_BINARY_DIR@")
+
+include("@CMAKE_BINARY_DIR@/dtkLinearAlgebraDenseDepends.cmake")
+
+######################################################################
+### dtkLinearAlgebraDenseConfig.cmake.in ends here

@@ -1,0 +1,6 @@
+#pragma once
+
+#include <dtkConfig.h>
+#include "dtkLinearAlgebraDense.h"
+#include "dtkBlasLevel1.h"
+#include "dtkDenseVector.h"
