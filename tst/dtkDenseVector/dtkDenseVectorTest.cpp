@@ -209,7 +209,44 @@ void dtkDenseVectorTestCase::testAssign(void)
     for (int i = 1; i < 12; ++i) {
         qDebug() << vv(i) << 2.5 * v(i);
     }
+
+    dtkDenseVec<double> vv2(11);
     
+    vv2 = 1.5 * vv + fv + v;
+
+    for (int i = 1; i < 12; ++i) {
+        qDebug() << vv2(i);
+    }
+
+    double scal = vv2 * vv;
+
+    qDebug() << scal;
+
+    //fv = vv2;
+
+    vv2.resize(10);
+
+    qDebug() << vv2.size();
+
+    dtkDenseVectorView<double> view(fv);
+
+    //dtkDenseVec<double> v_noview(fv);
+    //dtkDenseVec<double> v_view(view); 
+
+    //std::cout << v_noview.impl() << std::endl;
+
+    dtkDenseVec<double> v_view = v(dtkDenseVec<double>::Range(1,3));
+
+    qDebug() << v_view.data() << v.data();
+
+    std::cout << v_view.impl() << std::endl;
+
+    v_view(1) += 1;
+
+    qDebug() << v_view.data() << v.data();
+
+    std::cout << v_view.impl() << std::endl;
+    std::cout << v.impl() << std::endl;
 }
 
 void dtkDenseVectorTestCase::testClearAndReset(void)
