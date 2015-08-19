@@ -1,14 +1,14 @@
 // Version: $Id$
-// 
-// 
+//
+//
 
-// Commentary: 
-// 
-// 
+// Commentary:
+//
+//
 
 // Change Log:
-// 
-// 
+//
+//
 
 // Code:
 
@@ -71,6 +71,7 @@ template < typename T > class dtkDenseVec : public flens::Vector< dtkDenseVec<T>
 
 public:
     typedef flens::Range<qlonglong> Range;
+    typedef flens::Underscore<qlonglong> Underscore;
 
 public:
     friend class flens::Vector< dtkDenseVec<T> >;
@@ -87,9 +88,14 @@ public:
 
 protected:
     dtkDenseVec(const dtkArray<T>& array, Engine *engine, dtkDenseVectorView<T> *vec) : m_array(array), m_engine(engine), m_vec(vec) {;}
+    dtkDenseVec(const T *data, qlonglong size, qlonglong stride, qlonglong first_index) : m_array(dtkArray<T>::fromRawData(data, size)), m_engine(new Engine(size, const_cast<T *>(data), stride, first_index)) { m_vec = new dtkDenseVectorView<T>(*m_engine); }
+    dtkDenseVec(T *data, qlonglong size, qlonglong stride, qlonglong first_index) : m_array(dtkArray<T>::fromWritableRawData(data, size)), m_engine(new Engine(size, data, stride, first_index)) { m_vec = new dtkDenseVectorView<T>(*m_engine); }
 
 public:
     ~dtkDenseVec(void) { if(m_vec) delete m_vec; if (m_engine) delete m_engine; }
+
+public:
+    typename dtkDenseVectorView<T>::Initializer operator = (const T& value) { fill(value); return typename dtkDenseVectorView<T>::Initializer(*m_vec, firstIndex()); }
 
 public:
                             dtkDenseVec& operator  = (const dtkDenseVec& rhs)        { *m_vec = *(rhs.m_vec); return *this; }
@@ -111,10 +117,14 @@ public:
     qlonglong stride(void) const { return m_vec->stride(); }
 
 public:
-    void resize(const qlonglong& size) { 
-        m_array.resize(size); 
-        if (m_vec) delete m_vec; 
-        if(m_engine) delete m_engine; 
+    qlonglong firstIndex(void) const { return m_vec->firstIndex(); }
+    qlonglong  lastIndex(void) const { return m_vec->lastIndex();  }
+
+public:
+    void resize(const qlonglong& size) {
+        m_array.resize(size);
+        if (m_vec) delete m_vec;
+        if(m_engine) delete m_engine;
         m_engine = new Engine(m_array.size(), m_array.data());
         m_vec = new dtkDenseVectorView<T>(*m_engine);
     }
@@ -133,11 +143,11 @@ public:
 public:
     const T& operator [] (qlonglong index) const { return (*m_vec)(index); }
           T& operator [] (qlonglong index)       { return (*m_vec)(index); }
-    
+
 public:
     const T& operator () (qlonglong index) const { return  (*m_vec)(index); }
           T& operator () (qlonglong index)       { return  (*m_vec)(index); }
-    
+
 public:
     const T *data(void) const { return m_vec->data(); }
           T *data(void)       { return m_vec->data(); }
@@ -146,9 +156,18 @@ public:
 
 public:
     class View;
-    
+    class ConstView;
+
 public:
-    const dtkDenseVec<T>::View operator() (const Range& range) const {
+    const dtkDenseVec<T>::ConstView operator() (const Range& range) const {
+        return this->operator() (range, this->firstIndex());
+    }
+
+    dtkDenseVec<T>::View operator() (const Range& range) {
+        return this->operator() (range, this->firstIndex());
+    }
+
+    const dtkDenseVec<T>::ConstView operator() (const Range& range, qlonglong first_index) const {
 
         qlonglong from = range.firstIndex();
         qlonglong to   = range.lastIndex();
@@ -156,41 +175,86 @@ public:
 
         qlonglong length = (to - from) / stride + 1;
 
-        dtkArray<T> array = dtkArray<T>::fromRawData(data(), size());
+        const T *begin = &operator()(from);
 
-        T *begin = const_cast<T *>(array.constData() + (from - 1));
-        Engine *engine = new Engine(length, begin, stride, m_vec->firstIndex());
-        dtkDenseVectorView<T> *vec = new dtkDenseVectorView<T>(*engine);        
+        return dtkDenseVec<T>::ConstView(begin, length, stride * this->stride(), first_index);
+    }
 
-        const dtkDenseVec<T>::View v_view(array, engine, vec);
+    dtkDenseVec<T>::View operator() (const Range& range, qlonglong first_index) {
+
+        qlonglong from = range.firstIndex();
+        qlonglong to   = range.lastIndex();
+        qlonglong stride = range.stride();
+
+        qlonglong length = (to - from) / stride + 1;
+
+        T *begin = &operator()(from);
+
+        dtkDenseVec<T>::View v_view(begin, length, stride * this->stride(), first_index);
 
         return v_view;
     }
 
-    dtkDenseVec<T>::View operator() (const Range& range) {
+    const ConstView operator() (const Underscore& all, qlonglong first_index) const {
+        return this->operator()(all(this->firstIndex(), 1LL, this->lastIndex()), first_index);
+    }
 
-        qlonglong from = range.firstIndex();
-        qlonglong to   = range.lastIndex();
-        qlonglong stride = range.stride();
-
-        qlonglong length = (to - from) / stride + 1;
-
-        dtkArray<T> array = dtkArray<T>::fromWritableRawData(data(), size());
-
-        T *begin = array.data() + (from - 1);
-        Engine *engine = new Engine(length, begin, stride, m_vec->firstIndex());
-        dtkDenseVectorView<T> *vec = new dtkDenseVectorView<T>(*engine);        
-
-        dtkDenseVec<T>::View v_view(array, engine, vec);
-
-        return v_view;        
+    View operator() (const Underscore& all, qlonglong first_index) {
+        return this->operator()(all(this->firstIndex(), 1LL, this->lastIndex()), first_index);
     }
 };
 
 template <typename T> class dtkDenseVec<T>::View : public dtkDenseVec<T>
 {
 public:
-    View(const dtkArray<T>& array, Engine *engine, dtkDenseVectorView<T> *vec) : dtkDenseVec<T>(array, engine, vec) {;}
+    View(const T *data, qlonglong size, qlonglong stride, qlonglong first_index) : dtkDenseVec<T>(data, size, stride, first_index) {;}
+    View(T *data, qlonglong size, qlonglong stride, qlonglong first_index) : dtkDenseVec<T>(data, size, stride, first_index) {;}
+    View(const View& rhs) : dtkDenseVec<T>(rhs.data(), rhs.size(), rhs.stride(), rhs.firstIndex()) {;}
+
+private:
+    void resize(qlonglong) {;}
+};
+
+template <typename T> class dtkDenseVec<T>::ConstView : private dtkDenseVec<T>
+{
+public:
+    ConstView(const T *data, qlonglong size, qlonglong stride, qlonglong first_index) : dtkDenseVec<T>(data, size, stride, first_index) {;}
+    ConstView(const ConstView& rhs) : dtkDenseVec<T>(rhs.data(), rhs.size(), rhs.stride(), rhs.firstIndex()) {;}
+    ConstView(const View& rhs) : dtkDenseVec<T>(rhs.data(), rhs.size(), rhs.stride(), rhs.firstIndex()) {;}
+
+public:
+    const dtkDenseVectorView<T>& impl(void) const { return dtkDenseVec<T>::impl(); }
+          dtkDenseVectorView<T>& impl(void)       { return dtkDenseVec<T>::impl(); }
+
+public:
+    bool empty(void) const { return dtkDenseVec<T>::empty(); }
+
+    qlonglong   size(void) const { return dtkDenseVec<T>::size(); }
+    qlonglong length(void) const { return dtkDenseVec<T>::size(); }
+
+    qlonglong stride(void) const { return dtkDenseVec<T>::stride(); }
+
+public:
+    T at(const qlonglong& index) const { return dtkDenseVec<T>::at(index); }
+
+    T first(void) const { return dtkDenseVec<T>::first(); }
+    T  last(void) const { return dtkDenseVec<T>::last(); }
+
+public:
+    const T& operator [] (qlonglong index) const { return dtkDenseVec<T>::operator[](index); }
+
+public:
+    const T& operator () (qlonglong index) const { return dtkDenseVec<T>::operator()(index); }
+
+public:
+    const T *data(void) const { return dtkDenseVec<T>::data(); }
+
+    const T *constData(void) const { return dtkDenseVec<T>::constData(); }
+
+public:
+    const dtkDenseVec<T>::ConstView operator() (const Range& range) const { return dtkDenseVec<T>::operator() (range); }
+    const dtkDenseVec<T>::ConstView operator() (const Range& range, qlonglong first_index) const { return dtkDenseVec<T>::operator() (range, first_index); }
+    const ConstView operator() (const Underscore& all, qlonglong first_index) const { return dtkDenseVec<T>::operator() (all, first_index); }
 };
 
 // ///////////////////////////////////////////////////////////////////
@@ -209,5 +273,5 @@ template < typename T > inline typename flens::Vector< dtkDenseVec<T> >::Impl& f
 
 #include "dtkDenseVector.tpp"
 
-// 
+//
 // dtkDenseVector.h ends here

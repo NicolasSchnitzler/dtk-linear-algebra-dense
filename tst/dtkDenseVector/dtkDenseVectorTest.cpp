@@ -189,6 +189,7 @@ void dtkDenseVectorTestCase::testCreate(void)
 
 void dtkDenseVectorTestCase::testAssign(void)
 {
+    dtkDenseVec<double>::Underscore _;
     dtkDenseVec<double> v(11);
     
     flens::DenseVector<flens::Array<double> > fv(11);
@@ -235,7 +236,7 @@ void dtkDenseVectorTestCase::testAssign(void)
 
     //std::cout << v_noview.impl() << std::endl;
 
-    dtkDenseVec<double> v_view = v(dtkDenseVec<double>::Range(1,3));
+    dtkDenseVec<double>::View v_view = v(dtkDenseVec<double>::Range(1, 2, 11));
 
     qDebug() << v_view.data() << v.data();
 
@@ -247,6 +248,14 @@ void dtkDenseVectorTestCase::testAssign(void)
 
     std::cout << v_view.impl() << std::endl;
     std::cout << v.impl() << std::endl;
+
+    dtkDenseVec<double>::ConstView vv_view = v_view(_, 1);
+    std::cout << v_view.impl() << std::endl;
+    std::cout << vv_view.impl() << std::endl;
+    qDebug() << vv_view.stride();
+
+    dtkDenseVec<double> w(5); w = 1, 2, 3, 4, 5;
+    std::cout << w.impl() << std::endl;
 }
 
 void dtkDenseVectorTestCase::testClearAndReset(void)
