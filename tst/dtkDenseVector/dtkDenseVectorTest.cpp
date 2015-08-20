@@ -121,81 +121,82 @@ void dtkDenseVectorTestCase::init(void)
 
 void dtkDenseVectorTestCase::testCreate(void)
 {
-    // Check the basic properties.
-    dtkDenseVector<double> v0(11);
+    // // Check the basic properties.
+    // dtkDenseVector<double> v0(11);
 
-    for (int i = 1; i < 12; ++i) {
-        v0(i) = i;
-    }
-    for (int i = 1; i < 12; ++i) {
-        qDebug() << i << v0(i);
-    }
+    // for (int i = 1; i < 12; ++i) {
+    //     v0(i) = i;
+    // }
+    // for (int i = 1; i < 12; ++i) {
+    //     qDebug() << i << v0(i);
+    // }
     
 
-    dtkDenseVector<double> v1(11);
+    // dtkDenseVector<double> v1(11);
 
-    flens::fillRandom(v1);
-    for (int i = 1; i < 12; ++i) {
-        qDebug() << i << v1(i);
-    }
+    // flens::fillRandom(v1);
+    // for (int i = 1; i < 12; ++i) {
+    //     qDebug() << i << v1(i);
+    // }
 
-    v1 = v0;
+    // v1 = v0;
 
-    dtkDenseVector<double> v2;
+    // dtkDenseVector<double> v2;
 
-    double scal = v0 * v1;
+    // double scal = v0 * v1;
 
-    qDebug() << qSqrt(scal);
+    // qDebug() << qSqrt(scal);
 
-    scal = dtk::blas::normL2(v1);
-    qDebug() << scal;
+    // scal = dtk::blas::normL2(v1);
+    // qDebug() << scal;
 
 
-    double sum = dtk::blas::asum(v1);
-    double sum_check = 0;
-    for (int i = 1; i < 12; ++i) {
-        sum_check += v1(i);
-    }
+    // double sum = dtk::blas::asum(v1);
+    // double sum_check = 0;
+    // for (int i = 1; i < 12; ++i) {
+    //     sum_check += v1(i);
+    // }
 
-    qDebug() << sum << sum_check;
+    // qDebug() << sum << sum_check;
 
-    dtk::blas::asum(v1, sum_check);
+    // dtk::blas::asum(v1, sum_check);
     
-    qDebug() << sum << sum_check;
+    // qDebug() << sum << sum_check;
 
-    //dtk::blas::axpy(sum, v0, v1);
+    // //dtk::blas::axpy(sum, v0, v1);
 
-    v1 += sum * v0;
+    // v1 += sum * v0;
 
-    dtk::blas::copy(v0, v1);
+    // dtk::blas::copy(v0, v1);
 
-    std::cout << v1 << std::endl;
+    // std::cout << v1 << std::endl;
 
-    scal = dtk::blas::dot(v0, v1);
+    // scal = dtk::blas::dot(v0, v1);
 
-    sum = dtk::blas::dotu(v0, v1);
+    // sum = dtk::blas::dotu(v0, v1);
     
-    qDebug() << sum << scal;
+    // qDebug() << sum << scal;
 
-    dtk::blas::scal(3.1416, v0);
+    // dtk::blas::scal(3.1416, v0);
 
-    std::cout << v0 << std::endl;
+    // std::cout << v0 << std::endl;
 
-    dtk::blas::swap(v0, v1);
+    // dtk::blas::swap(v0, v1);
 
-    std::cout << v0 << std::endl;
-    std::cout << v1 << std::endl;
+    // std::cout << v0 << std::endl;
+    // std::cout << v1 << std::endl;
 }
 
 void dtkDenseVectorTestCase::testAssign(void)
 {
-    dtkDenseVec<double>::Underscore _;
-    dtkDenseVec<double> v(11);
+    dtkDenseVector<double>::Underscore _;
+    dtkDenseVector<double> v(11);
     
     flens::DenseVector<flens::Array<double> > fv(11);
 
     for (int i = 1; i < 12; ++i) {
         fv(i) = i;
+        qDebug() << i << fv(i);
     }
     
     v = fv;
@@ -203,7 +204,7 @@ void dtkDenseVectorTestCase::testAssign(void)
         qDebug() << v(i);
     }
 
-    dtkDenseVec<double> vv(11);
+    dtkDenseVector<double> vv(11);
 
     vv = 1.5 * v + fv;
 
@@ -211,7 +212,7 @@ void dtkDenseVectorTestCase::testAssign(void)
         qDebug() << vv(i) << 2.5 * v(i);
     }
 
-    dtkDenseVec<double> vv2(11);
+    dtkDenseVector<double> vv2(11);
     
     vv2 = 1.5 * vv + fv + v;
 
@@ -229,33 +230,37 @@ void dtkDenseVectorTestCase::testAssign(void)
 
     qDebug() << vv2.size();
 
-    dtkDenseVectorView<double> view(fv);
+    flens::DenseVector<flens::ArrayView<double> > view(fv);
 
-    //dtkDenseVec<double> v_noview(fv);
-    //dtkDenseVec<double> v_view(view); 
+    //dtkDenseVector<double> v_noview(fv);
+    //dtkDenseVector<double> v_view(view); 
 
     //std::cout << v_noview.impl() << std::endl;
 
-    dtkDenseVec<double>::View v_view = v(dtkDenseVec<double>::Range(1, 2, 11));
+    dtkDenseVector<double>::View v_view = v(_(1, 2, 11));
 
     qDebug() << v_view.data() << v.data();
 
-    std::cout << v_view.impl() << std::endl;
+    // std::cout << v_view.impl() << std::endl;
 
     v_view(1) += 1;
 
     qDebug() << v_view.data() << v.data();
 
-    std::cout << v_view.impl() << std::endl;
-    std::cout << v.impl() << std::endl;
+    // std::cout << v_view.impl() << std::endl;
+    // std::cout << v.impl() << std::endl;
 
-    dtkDenseVec<double>::ConstView vv_view = v_view(_, 1);
-    std::cout << v_view.impl() << std::endl;
-    std::cout << vv_view.impl() << std::endl;
+    dtkDenseVector<double>::ConstView vv_view = v_view(_, 1);
+    // std::cout << v_view.impl() << std::endl;
+    // std::cout << vv_view.impl() << std::endl;
     qDebug() << vv_view.stride();
 
-    dtkDenseVec<double> w(5); w = 1, 2, 3, 4, 5;
-    std::cout << w.impl() << std::endl;
+    dtkDenseVector<double> w = {1., 2., 3., 4., 5.};
+    // std::cout << w.impl() << std::endl;
+
+    w.append({ 1., 2., 3., 4., 5. });
+    qDebug() << w.size();
+    // std::cout << w.impl() << std::endl;
 }
 
 void dtkDenseVectorTestCase::testClearAndReset(void)
