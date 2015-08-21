@@ -18,60 +18,163 @@
 
 #include <flens/flens.cxx>
 
+#include <dtkCore>
 #include <QtCore>
 
+// ///////////////////////////////////////////////////////////////////
+// CRTP base class declaraton
+// ///////////////////////////////////////////////////////////////////
 
+template < typename T > class dtkDenseMatrix;
 
-template < typename T > class dtkDenseMatrix : public flens::GeneralMatrix< dtkDenseMatrix<T> >
+namespace flens {
+
+template < typename T > class Matrix< GeneralMatrix<dtkDenseMatrix<T> > >
 {
-    flens::GeMatrix< flens::FullStorage<T> > mat;    
-
 public:
-    typedef typename flens::GeMatrix< flens::FullStorage<T> >::Engine Engine;
-    typedef typename Engine::ElementType                              ElementType;
-    typedef typename Engine::IndexType                                IndexType;
+    typedef GeMatrix< FullStorageView<T,flens::ColMajor> > Impl;
 
-    // view types from Engine
-    typedef typename Engine::ConstView              EngineConstView;
-    typedef typename Engine::View                   EngineView;
-    typedef typename Engine::NoView                 EngineNoView;
+    virtual ~Matrix(void) {}
 
-    typedef typename Engine::ConstArrayView         ConstArrayView;
-    typedef typename Engine::ArrayView              ArrayView;
-    typedef typename Engine::Array                  Array;
+    const Impl& impl(void) const;
+          Impl& impl(void);
+};
 
-    // view types
-    typedef flens::DenseVector<ConstArrayView>             ConstVectorView;
-    typedef flens::DenseVector<ArrayView>                  VectorView;
-    typedef flens::DenseVector<Array>                      Vector;
+}
 
-    typedef dtkDenseMatrix<EngineConstView>               ConstView;
-    typedef dtkDenseMatrix<EngineView>                    View;
-    typedef dtkDenseMatrix<EngineNoView>                  NoView;
+template <typename T> using dtkMatrixBase = flens::Matrix< flens::GeneralMatrix<dtkDenseMatrix<T> > >;
+
+// ///////////////////////////////////////////////////////////////////
+// dtkDenseMatrix declaration
+// ///////////////////////////////////////////////////////////////////
+
+template < typename T > class dtkDenseMatrix : public dtkMatrixBase<T>
+{
+    
+private:
+    typedef typename flens::GeMatrix< flens::FullStorageView<T,flens::ColMajor> > FlensView;
+    typedef typename FlensView::Engine                                            Engine;
 
 private:
-    typedef dtkDenseMatrix                          DM;
+    FlensView *m_view;
+    Engine *m_engine;
+    dtkArray<T> m_array;
+    
+private:
+    const FlensView& impl(void) const;
+          FlensView& impl(void);
+          
+public:
+    typedef flens::Range<qlonglong> Range;
+    typedef flens::Underscore<qlonglong> Underscore;
 
 public:
-    typedef flens::IndexVariable<IndexType>                IndexVariable;
-    typedef flens::gematrix::ConstElementClosure<DM>       ConstElementClosure;
-    typedef flens::gematrix::ElementClosure<DM>            ElementClosure;
-    typedef flens::gematrix::Initializer<DM>               Initializer;
-
-
-public:
-    dtkDenseMatrix(void) {}
-    dtkDenseMatrix(IndexType numRows, IndexType numCols) : mat(numRows, numCols) {}
-    dtkDenseMatrix(IndexType numRows, IndexType numCols, IndexType firstRow, IndexType firstCol) : mat(numRows, numCols, firstRow, firstCol) {}
-    dtkDenseMatrix(const dtkDenseMatrix &rhs) : mat(rhs.mat) {}
+    dtkDenseMatrix(void);
+    dtkDenseMatrix(qlonglong row_count, qlonglong col_count);
+    dtkDenseMatrix(const dtkDenseMatrix &rhs);
+    
+protected:
+    dtkDenseMatrix(const T *data, qlonglong row_count, qlonglong col_count, qlonglong first_row, qlonglong first_col);
+    dtkDenseMatrix(      T *data, qlonglong row_count, qlonglong col_count, qlonglong first_row, qlonglong first_col);
 
 public:
-    qlonglong rowCount(void) const { return mat.numRows(); } 
-    qlonglong colCount(void) const { return mat.numCols(); }
+    virtual ~dtkDenseMatrix();
 
 public:
+    bool      isEmpty (void) const;
+    qlonglong rowCount(void) const;  
+    qlonglong colCount(void) const;
+    
+public:
+    qlonglong firstRow(void) const;
+    qlonglong firstCol(void) const;
+
+public:
+    void fill(T value);
+    
+public:
+    const T& operator () (qlonglong row, qlonglong col) const;
+    T& operator () (qlonglong row, qlonglong col);
+
+public:
+    const T *data(void) const;
+          T *data(void);
+
+    const T *constData(void) const;
+    
+public:
+    class View;
+    class ConstView;
+    
+public:
+    const ConstView operator() (const Range& row_range, const Range& col_range) const;
+               View operator() (const Range& row_range, const Range& col_range);
+
+    const ConstView operator() (const Range& row_range, const Range& col_range, qlonglong first_row, qlonglong first_col) const;
+               View operator() (const Range& row_range, const Range& col_range, qlonglong first_row, qlonglong first_col);
+
+    /*const ConstView operator() (const Underscore& all, qlonglong first_index) const;
+               View operator() (const Underscore& all, qlonglong first_index);*/
     
 };
+
+
+// ///////////////////////////////////////////////////////////////////
+// dtkDenseMatrix::View declaration
+// ///////////////////////////////////////////////////////////////////
+
+template <typename T> class dtkDenseMatrix<T>::View : public dtkDenseMatrix<T>
+{
+public:
+    View(T *data,  qlonglong row_count, qlonglong col_count, qlonglong first_row, qlonglong first_col);
+    View(const View& rhs);
+};
+
+// ///////////////////////////////////////////////////////////////////
+// dtkDenseMatrix::ConstView declaration
+// ///////////////////////////////////////////////////////////////////
+
+template <typename T> class dtkDenseMatrix<T>::ConstView : private dtkDenseMatrix<T>
+{
+public:
+    ConstView(T *data, qlonglong row_count, qlonglong col_count, qlonglong first_row, qlonglong first_col);
+    ConstView(const ConstView& rhs);
+    ConstView(const View& rhs);
+
+public:
+    bool isEmpty(void) const { return dtkDenseMatrix<T>::isEmpty(); }
+
+    qlonglong   size(void) const { return dtkDenseMatrix<T>::size(); }
+    qlonglong length(void) const { return dtkDenseMatrix<T>::size(); }
+
+    qlonglong stride(void) const { return dtkDenseMatrix<T>::stride(); }
+
+public:
+    T at(const qlonglong& index) const { return dtkDenseMatrix<T>::at(index); }
+
+    T first(void) const { return dtkDenseMatrix<T>::first(); }
+    T  last(void) const { return dtkDenseMatrix<T>::last(); }
+
+public:
+    const T& operator [] (qlonglong index) const { return dtkDenseMatrix<T>::operator[](index); }
+
+public:
+    const T& operator () (qlonglong index) const { return dtkDenseMatrix<T>::operator()(index); }
+
+public:
+    const T *data(void) const { return dtkDenseMatrix<T>::data(); }
+
+    const T *constData(void) const { return dtkDenseMatrix<T>::constData(); }
+
+public:
+    const dtkDenseMatrix<T>::ConstView operator() (const Range& range) const { return dtkDenseMatrix<T>::operator() (range); }
+    const dtkDenseMatrix<T>::ConstView operator() (const Range& range, qlonglong first_index) const { return dtkDenseMatrix<T>::operator() (range, first_index); }
+    const ConstView operator() (const Underscore& all, qlonglong first_index) const { return dtkDenseMatrix<T>::operator() (all, first_index); }
+};
+
+// ///////////////////////////////////////////////////////////////////
+
+#include "dtkDenseMatrix.tpp"
 
 // 
 // dtkDenseMatrix.h ends here

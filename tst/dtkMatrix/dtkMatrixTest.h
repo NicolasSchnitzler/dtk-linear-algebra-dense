@@ -27,11 +27,11 @@ private slots:
 private slots:
     void testCreate(void);
     void testAssign(void);
-    void testClearAndReset(void);
+    /*void testClearAndReset(void);
     void testResize(void);
     void testReserve(void);
     void testFill(void);
-    void testIterator(void);
+    void testIterator(void);*/
 
 private slots:
     void cleanupTestCase(void);

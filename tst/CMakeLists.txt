@@ -12,7 +12,7 @@
 ## 
 ### Code:
 
-#add_subdirectory(dtkMatrix)
+add_subdirectory(dtkMatrix)
 add_subdirectory(dtkDenseVector)
 
 ######################################################################
