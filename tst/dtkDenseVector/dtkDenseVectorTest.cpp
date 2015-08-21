@@ -187,6 +187,12 @@ void dtkDenseVectorTestCase::testCreate(void)
     // std::cout << v1 << std::endl;
 }
 
+void dtkDenseVectorTestCase::testEmptyVec(void)
+{
+        dtkDenseVector<double> v;
+        QVERIFY(v.size()==0);
+}
+
 void dtkDenseVectorTestCase::testAssign(void)
 {
     dtkDenseVector<double>::Underscore _;

@@ -42,9 +42,10 @@ template < typename T > inline typename dtkDenseVector<T>::FlensView& dtkDenseVe
     return *m_view;
 }
 
-template < typename T > inline dtkDenseVector<T>::dtkDenseVector(void) : m_engine(NULL), m_view(NULL)
+template < typename T > inline dtkDenseVector<T>::dtkDenseVector(void)
 {
-
+    m_engine = new Engine(0, const_cast<T *>(m_array.constData()));
+    m_view   = new FlensView(*m_engine);
 }
 
 template < typename T > inline dtkDenseVector<T>::dtkDenseVector(qlonglong size) : m_array(size)

@@ -26,6 +26,7 @@ private slots:
 
 private slots:
     void testCreate(void);
+    void testEmptyVec(void);
     void testAssign(void);
     void testClearAndReset(void);
     void testResize(void);
