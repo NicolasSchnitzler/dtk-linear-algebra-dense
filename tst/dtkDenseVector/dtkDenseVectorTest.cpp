@@ -261,6 +261,27 @@ void dtkDenseVectorTestCase::testAssign(void)
     w.append({ 1., 2., 3., 4., 5. });
     qDebug() << w.size();
     // std::cout << w.impl() << std::endl;
+
+    dtkDenseVector<double> aa(5);
+
+    for (int i = 1; i < 6; ++i) {
+        aa(i)=i;
+    }
+
+    dtkDenseVector<double> bb(5);
+
+    for (int i = 1; i < 6; ++i) {
+        bb(i)=i+6;
+    }
+
+    aa.append(bb);
+
+    for (int i = 1; i < aa.size()+1; ++i) {
+        qDebug()<<aa(i);
+    }
+
+
+
 }
 
 void dtkDenseVectorTestCase::testClearAndReset(void)
@@ -283,7 +304,142 @@ void dtkDenseVectorTestCase::testFill(void)
 void dtkDenseVectorTestCase::testIterator(void)
 {
 
+}
+
+void dtkDenseVectorTestCase::testAddAssign(void)
+{
+    dtkDenseVector<double>::Underscore _;
+    //test vec+vec    
     
+    dtkDenseVector<double> aa={1., 2., 3., 4., 5.};
+    dtkDenseVector<double> bb={1., 2., 3., 4., 5.};
+    dtkDenseVector<double> cc={1., 2., 3., 4., 5.};
+    dtkDenseVector<double> dd={1., 2., 3., 4., 5.};
+    dtkDenseVector<double> ee={1., 2., 3., 4., 5.};
+    
+    aa+=bb;
+
+    for (int i = 1; i < 6; ++i) {
+        QVERIFY(aa(i)==2*i);    
+        QVERIFY(bb(i)==i);    
+    }
+    
+    //test vec+view 
+    
+     dtkDenseVector<double>::View v_view = dd(_, 1);
+     
+     cc+=v_view;
+    
+     for (int i = 1; i < 6; ++i) {
+        QVERIFY(cc(i)==2*i);    
+        QVERIFY(v_view(i)==i);        
+    }
+    
+    //test view+vec 
+    
+    dtkDenseVector<double>::View v_view2 = ee(_, 1);
+     
+     v_view2+=ee;
+    
+     for (int i = 1; i < 6; ++i) {
+        QVERIFY(ee(i)==2*i);
+        QVERIFY(dd(i)==i);
+        QVERIFY(v_view2(i)==2*i);        
+    }
+    
+}
+
+void dtkDenseVectorTestCase::testSubAssign(void)
+{
+dtkDenseVector<double>::Underscore _;
+    //test vec+vec    
+    
+    dtkDenseVector<double> aa={1., 2., 3., 4., 5.};
+    dtkDenseVector<double> bb={1., 2., 3., 4., 5.};
+    dtkDenseVector<double> cc={1., 2., 3., 4., 5.};
+    dtkDenseVector<double> dd={1., 2., 3., 4., 5.};
+    dtkDenseVector<double> ee={1., 2., 3., 4., 5.};
+    
+    
+    aa-=bb;
+
+    for (int i = 1; i < 6; ++i) {
+        QVERIFY(aa(i)==0);    
+        QVERIFY(bb(i)==i);    
+    }
+    
+    //test vec+view 
+    
+     dtkDenseVector<double>::View v_view = dd(_, 1);
+     
+     cc-=v_view;
+    
+     for (int i = 1; i < 6; ++i) {
+        QVERIFY(cc(i)==0);    
+        QVERIFY(v_view(i)==i);     
+    }
+    
+    //test view+vec 
+    
+    dtkDenseVector<double>::View v_view2 = ee(_, 1);
+     
+     v_view2-=ee;
+    
+     for (int i = 1; i < 6; ++i) {
+        QVERIFY(ee(i)==0);
+        QVERIFY(dd(i)==i);
+        QVERIFY(v_view2(i)==0);        
+    }
+}
+
+void dtkDenseVectorTestCase::testMulAssign(void)
+{
+dtkDenseVector<double>::Underscore _;
+    //test vec+vec    
+    
+    dtkDenseVector<double> aa={1., 2., 3., 4., 5.};
+    dtkDenseVector<double> bb={1., 2., 3., 4., 5.};  
+    
+    aa*=2;
+
+    for (int i = 1; i < 6; ++i) {
+        QVERIFY(aa(i)==2*i);        
+    }
+    
+    //test vec+view 
+    
+     dtkDenseVector<double>::View v_view = bb(_, 1);
+     
+     v_view*=2;
+    
+     for (int i = 1; i < 6; ++i) {
+        QVERIFY(bb(i)==2*i);    
+        QVERIFY(v_view(i)==2*i);    
+    }
+}
+
+void dtkDenseVectorTestCase::testScalAssign(void)
+{
+dtkDenseVector<double>::Underscore _;    
+    
+    dtkDenseVector<double> aa={1., 2., 3., 4., 5.};
+    dtkDenseVector<double> bb={1., 2., 3., 4., 5.};
+    
+    aa/=2;
+
+    for (int i = 1; i < 6; ++i) {
+        QVERIFY(aa(i)==i/2.);        
+    }
+    
+    
+     dtkDenseVector<double>::View v_view = bb(_, 1);
+     
+     v_view/=2;
+    
+     for (int i = 1; i < 6; ++i) {
+        QVERIFY(bb(i)==i/2.);    
+        QVERIFY(v_view(i)==i/2.);    
+    }
 }
 
 void dtkDenseVectorTestCase::cleanupTestCase(void)

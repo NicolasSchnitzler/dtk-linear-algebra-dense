@@ -111,6 +111,7 @@ public:
     void resize(const qlonglong& size);
 
     void append(std::initializer_list<T> list);
+    void append(const dtkDenseVector<T>& other);
 
 public:
     void fill(const T& value);

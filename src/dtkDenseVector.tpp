@@ -191,6 +191,21 @@ template < typename T > inline void dtkDenseVector<T>::append(std::initializer_l
     }
 }
 
+template < typename T > inline void dtkDenseVector<T>::append(const dtkDenseVector<T>& other)
+{
+    if (other.size() > 0) {
+        m_array.append(other.m_array);
+
+        if (m_view)
+            delete m_view;
+        if (m_engine)
+            delete m_engine;
+
+        m_engine = new Engine(m_array.size(), m_array.data());
+        m_view   = new FlensView(*m_engine);
+    }
+}
+
 template < typename T > inline void dtkDenseVector<T>::fill(const T& value)
 {
     m_view->fill(value);

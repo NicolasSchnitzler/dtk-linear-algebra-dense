@@ -32,10 +32,10 @@ private slots:
     void testReserve(void);
     void testFill(void);
     void testIterator(void);
-    // void testAddAssign(void);
-    // void testSubAssign(void);
-    // void testMulAssign(void);
-    // void testScalAssign(void);
+    void testAddAssign(void);
+    void testSubAssign(void);
+    void testMulAssign(void);
+    void testScalAssign(void);
 
 private slots:
     void cleanupTestCase(void);
