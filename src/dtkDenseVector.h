@@ -154,96 +154,17 @@ public:
                View operator() (const Underscore& all, qlonglong first_index);
 
 public:
-    class iterator {
-    public:
-        T *i;
-        qlonglong inc;
-        typedef std::random_access_iterator_tag iterator_category;
-        typedef qintptr difference_type;
-        typedef T value_type;
-        typedef T *pointer;
-        typedef T &reference;
-
-    public:
-        iterator(void) : i(0), inc(1LL) {}
-        iterator(T *n, qlonglong increment) : i(n), inc(increment) {}
-
-    public:
-        T& operator *  (void) const { return *i; }
-        T *operator -> (void) const { return  i; }
-        T& operator [] (qintptr j) const { return *(i + j); }
-        bool operator == (const iterator &o) const { return i == o.i; }
-        bool operator != (const iterator &o) const { return i != o.i; }
-        bool operator <  (const iterator& other) const { return i <  other.i; }
-        bool operator <= (const iterator& other) const { return i <= other.i; }
-        bool operator >  (const iterator& other) const { return i >  other.i; }
-        bool operator >= (const iterator& other) const { return i >= other.i; }
-        iterator& operator ++ (void) { i += inc; return *this; }
-        iterator  operator ++ (int) { T *n = i; i += inc; return n; }
-        iterator& operator -- (void) { i -= inc; return *this; }
-        iterator  operator -- (int) { T *n = i; i -= inc; return n; }
-        iterator& operator += (qintptr j) { i+=j*inc; return *this; }
-        iterator& operator -= (qintptr j) { i-=j*inc; return *this; }
-        iterator  operator +  (qintptr j) const { return iterator(i+j*inc, inc); }
-        iterator  operator -  (qintptr j) const { return iterator(i-j*inc, inc); }
-        qintptr operator - (const iterator& j) const { return (i - j.i) / inc; }
-        operator T* (void) const { return i; }
-    };
-    friend class iterator;
+    class       iterator;
+    class const_iterator;
 
 public:
-    class const_iterator {
-    public:
-        const T *i;
-        qlonglong inc;
-        typedef std::random_access_iterator_tag  iterator_category;
-        typedef qintptr difference_type;
-        typedef T value_type;
-        typedef const T *pointer;
-        typedef const T &reference;
+          iterator  begin(void)       { return       iterator(data(), stride()); }
+    const_iterator  begin(void) const { return const_iterator(data(), stride()); }
+    const_iterator cbegin(void) const { return const_iterator(data(), stride()); }
 
-    public:
-                 const_iterator(void) : i(0), inc(1LL) {}
-                 const_iterator(const T *n, qlonglong increment) : i(n), inc(increment) {}
-        explicit const_iterator(const iterator &o): i(o.i), inc(o.inc) {}
-
-    public:
-        const T& operator *  (void) const { return *i; }
-        const T *operator -> (void) const { return  i; }
-        const T& operator [] (qintptr j) const { return *(i + j); }
-        bool operator == (const const_iterator &o) const { return i == o.i; }
-        bool operator != (const const_iterator &o) const { return i != o.i; }
-        bool operator <  (const const_iterator& other) const { return i <  other.i; }
-        bool operator <= (const const_iterator& other) const { return i <= other.i; }
-        bool operator >  (const const_iterator& other) const { return i >  other.i; }
-        bool operator >= (const const_iterator& other) const { return i >= other.i; }
-        const_iterator &operator ++ (void) { i += inc; return *this; }
-        const_iterator operator  ++ (int) { const T *n = i; i += inc; return n; }
-        const_iterator &operator -- (void) { i -= inc; return *this; }
-        const_iterator operator  -- (int) { const T *n = i; i -= inc; return n; }
-        const_iterator &operator += (qintptr j) { i+=j*inc; return *this; }
-        const_iterator &operator -= (qintptr j) { i-=j*inc; return *this; }
-        const_iterator operator  +  (qintptr j) const { return const_iterator(i+j*inc, inc); }
-        const_iterator operator  -  (qintptr j) const { return const_iterator(i-j*inc, inc); }
-        qintptr operator - (const const_iterator& j) const { return (i - j.i) / inc; }
-        operator const T* (void) const { return i; }
-    };
-    friend class const_iterator;
-
-public:
-    typedef iterator            Iterator;
-    typedef const_iterator ConstIterator;
-
-public:
-          iterator begin(void)            { return       iterator(data(), stride()); }
-    const_iterator begin(void)      const { return const_iterator(data(), stride()); }
-    const_iterator cbegin(void)     const { return const_iterator(data(), stride()); }
-    const_iterator constBegin(void) const { return const_iterator(data(), stride()); }
-
-          iterator end(void)            { return       iterator(data() + size(), stride()); }
-    const_iterator end(void)      const { return const_iterator(data() + size(), stride()); }
-    const_iterator cend(void)     const { return const_iterator(data() + size(), stride()); }
-    const_iterator constEnd(void) const { return const_iterator(data() + size(), stride()); }
+          iterator  end(void)       { return       iterator(data() + size(), stride()); }
+    const_iterator  end(void) const { return const_iterator(data() + size(), stride()); }
+    const_iterator cend(void) const { return const_iterator(data() + size(), stride()); }
 };
 
 // ///////////////////////////////////////////////////////////////////
@@ -311,13 +232,94 @@ public:
     const ConstView operator() (const Underscore& all, qlonglong first_index) const { return dtkDenseVector<T>::operator() (all, first_index); }
 
 public:
-    const_iterator begin(void)      const { return dtkDenseVector<T>::cbegin(); }
-    const_iterator cbegin(void)     const { return dtkDenseVector<T>::cbegin(); }
-    const_iterator constBegin(void) const { return dtkDenseVector<T>::cbegin(); }
+    const_iterator  begin(void) const { return dtkDenseVector<T>::cbegin(); }
+    const_iterator cbegin(void) const { return dtkDenseVector<T>::cbegin(); }
 
-    const_iterator end(void)      const { return dtkDenseVector<T>::cend(); }
-    const_iterator cend(void)     const { return dtkDenseVector<T>::cend(); }
-    const_iterator constEnd(void) const { return dtkDenseVector<T>::cend(); }
+    const_iterator  end(void) const { return dtkDenseVector<T>::cend(); }
+    const_iterator cend(void) const { return dtkDenseVector<T>::cend(); }
+};
+
+// ///////////////////////////////////////////////////////////////////
+// dtkDenseVector<T>::iterator
+// ///////////////////////////////////////////////////////////////////
+    
+template <typename T> class dtkDenseVector<T>::iterator 
+{
+public:
+    T *i;
+    qlonglong inc;
+    typedef std::random_access_iterator_tag iterator_category;
+    typedef qintptr difference_type;
+    typedef T value_type;
+    typedef T *pointer;
+    typedef T &reference;
+    
+public:
+    iterator(void) : i(0), inc(1LL) {}
+    iterator(T *n, qlonglong increment) : i(n), inc(increment) {}
+    
+public:
+    T& operator *  (void) const { return *i; }
+    T *operator -> (void) const { return  i; }
+    T& operator [] (qintptr j) const { return *(i + j); }
+    bool operator == (const iterator &o) const { return i == o.i; }
+    bool operator != (const iterator &o) const { return i != o.i; }
+    bool operator <  (const iterator& other) const { return i <  other.i; }
+    bool operator <= (const iterator& other) const { return i <= other.i; }
+    bool operator >  (const iterator& other) const { return i >  other.i; }
+    bool operator >= (const iterator& other) const { return i >= other.i; }
+    iterator& operator ++ (void) { i += inc; return *this; }
+    iterator  operator ++ (int) { T *n = i; i += inc; return n; }
+    iterator& operator -- (void) { i -= inc; return *this; }
+    iterator  operator -- (int) { T *n = i; i -= inc; return n; }
+    iterator& operator += (qintptr j) { i+=j*inc; return *this; }
+    iterator& operator -= (qintptr j) { i-=j*inc; return *this; }
+    iterator  operator +  (qintptr j) const { return iterator(i+j*inc, inc); }
+    iterator  operator -  (qintptr j) const { return iterator(i-j*inc, inc); }
+    qintptr operator - (const iterator& j) const { return (i - j.i) / inc; }
+    operator T* (void) const { return i; }
+};
+
+// ///////////////////////////////////////////////////////////////////
+// dtkDenseVector<T>::const_iterator
+// ///////////////////////////////////////////////////////////////////
+    
+template <typename T> class dtkDenseVector<T>::const_iterator
+{
+public:
+    const T *i;
+    qlonglong inc;
+    typedef std::random_access_iterator_tag  iterator_category;
+    typedef qintptr difference_type;
+    typedef T value_type;
+    typedef const T *pointer;
+    typedef const T &reference;
+    
+public:
+             const_iterator(void) : i(0), inc(1LL) {}
+             const_iterator(const T *n, qlonglong increment) : i(n), inc(increment) {}
+    explicit const_iterator(const iterator &o): i(o.i), inc(o.inc) {}
+
+public:
+    const T& operator *  (void) const { return *i; }
+    const T *operator -> (void) const { return  i; }
+    const T& operator [] (qintptr j) const { return *(i + j); }
+    bool operator == (const const_iterator &o) const { return i == o.i; }
+    bool operator != (const const_iterator &o) const { return i != o.i; }
+    bool operator <  (const const_iterator& other) const { return i <  other.i; }
+    bool operator <= (const const_iterator& other) const { return i <= other.i; }
+    bool operator >  (const const_iterator& other) const { return i >  other.i; }
+    bool operator >= (const const_iterator& other) const { return i >= other.i; }
+    const_iterator &operator ++ (void) { i += inc; return *this; }
+    const_iterator operator  ++ (int) { const T *n = i; i += inc; return n; }
+    const_iterator &operator -- (void) { i -= inc; return *this; }
+    const_iterator operator  -- (int) { const T *n = i; i -= inc; return n; }
+    const_iterator &operator += (qintptr j) { i+=j*inc; return *this; }
+    const_iterator &operator -= (qintptr j) { i-=j*inc; return *this; }
+    const_iterator operator  +  (qintptr j) const { return const_iterator(i+j*inc, inc); }
+    const_iterator operator  -  (qintptr j) const { return const_iterator(i-j*inc, inc); }
+    qintptr operator - (const const_iterator& j) const { return (i - j.i) / inc; }
+    operator const T* (void) const { return i; }
 };
 
 // ///////////////////////////////////////////////////////////////////
