@@ -83,13 +83,13 @@ public:
     virtual ~dtkDenseVector(void);
 
 public:
-    dtkDenseVector& operator = (const T& value);
-
-public:
     template <typename RHS> dtkDenseVector& operator  = (const flens::Vector<RHS>& rhs);
 
     template <typename RHS> dtkDenseVector& operator += (const flens::Vector<RHS>& rhs);
     template <typename RHS> dtkDenseVector& operator -= (const flens::Vector<RHS>& rhs);
+
+public:
+    dtkDenseVector& operator = (const T& value);
 
 public:
     template <typename S> typename std::enable_if<std::is_convertible<S, T>::value, dtkDenseVector>::type& operator *= (const S& alpha);
@@ -108,6 +108,8 @@ public:
     qlonglong  lastIndex(void) const;
 
 public:
+    void clear(void);
+
     void resize(const qlonglong& size);
 
     void append(std::initializer_list<T> list);
@@ -150,6 +152,98 @@ public:
 
     const ConstView operator() (const Underscore& all, qlonglong first_index) const;
                View operator() (const Underscore& all, qlonglong first_index);
+
+public:
+    class iterator {
+    public:
+        T *i;
+        qlonglong inc;
+        typedef std::random_access_iterator_tag iterator_category;
+        typedef qintptr difference_type;
+        typedef T value_type;
+        typedef T *pointer;
+        typedef T &reference;
+
+    public:
+        iterator(void) : i(0), inc(1LL) {}
+        iterator(T *n, qlonglong increment) : i(n), inc(increment) {}
+
+    public:
+        T& operator *  (void) const { return *i; }
+        T *operator -> (void) const { return  i; }
+        T& operator [] (qintptr j) const { return *(i + j); }
+        bool operator == (const iterator &o) const { return i == o.i; }
+        bool operator != (const iterator &o) const { return i != o.i; }
+        bool operator <  (const iterator& other) const { return i <  other.i; }
+        bool operator <= (const iterator& other) const { return i <= other.i; }
+        bool operator >  (const iterator& other) const { return i >  other.i; }
+        bool operator >= (const iterator& other) const { return i >= other.i; }
+        iterator& operator ++ (void) { i += inc; return *this; }
+        iterator  operator ++ (int) { T *n = i; i += inc; return n; }
+        iterator& operator -- (void) { i -= inc; return *this; }
+        iterator  operator -- (int) { T *n = i; i -= inc; return n; }
+        iterator& operator += (qintptr j) { i+=j*inc; return *this; }
+        iterator& operator -= (qintptr j) { i-=j*inc; return *this; }
+        iterator  operator +  (qintptr j) const { return iterator(i+j*inc, inc); }
+        iterator  operator -  (qintptr j) const { return iterator(i-j*inc, inc); }
+        qintptr operator - (const iterator& j) const { return (i - j.i) / inc; }
+        operator T* (void) const { return i; }
+    };
+    friend class iterator;
+
+public:
+    class const_iterator {
+    public:
+        const T *i;
+        qlonglong inc;
+        typedef std::random_access_iterator_tag  iterator_category;
+        typedef qintptr difference_type;
+        typedef T value_type;
+        typedef const T *pointer;
+        typedef const T &reference;
+
+    public:
+                 const_iterator(void) : i(0), inc(1LL) {}
+                 const_iterator(const T *n, qlonglong increment) : i(n), inc(increment) {}
+        explicit const_iterator(const iterator &o): i(o.i), inc(o.inc) {}
+
+    public:
+        const T& operator *  (void) const { return *i; }
+        const T *operator -> (void) const { return  i; }
+        const T& operator [] (qintptr j) const { return *(i + j); }
+        bool operator == (const const_iterator &o) const { return i == o.i; }
+        bool operator != (const const_iterator &o) const { return i != o.i; }
+        bool operator <  (const const_iterator& other) const { return i <  other.i; }
+        bool operator <= (const const_iterator& other) const { return i <= other.i; }
+        bool operator >  (const const_iterator& other) const { return i >  other.i; }
+        bool operator >= (const const_iterator& other) const { return i >= other.i; }
+        const_iterator &operator ++ (void) { i += inc; return *this; }
+        const_iterator operator  ++ (int) { const T *n = i; i += inc; return n; }
+        const_iterator &operator -- (void) { i -= inc; return *this; }
+        const_iterator operator  -- (int) { const T *n = i; i -= inc; return n; }
+        const_iterator &operator += (qintptr j) { i+=j*inc; return *this; }
+        const_iterator &operator -= (qintptr j) { i-=j*inc; return *this; }
+        const_iterator operator  +  (qintptr j) const { return const_iterator(i+j*inc, inc); }
+        const_iterator operator  -  (qintptr j) const { return const_iterator(i-j*inc, inc); }
+        qintptr operator - (const const_iterator& j) const { return (i - j.i) / inc; }
+        operator const T* (void) const { return i; }
+    };
+    friend class const_iterator;
+
+public:
+    typedef iterator            Iterator;
+    typedef const_iterator ConstIterator;
+
+public:
+          iterator begin(void)            { return       iterator(data(), stride()); }
+    const_iterator begin(void)      const { return const_iterator(data(), stride()); }
+    const_iterator cbegin(void)     const { return const_iterator(data(), stride()); }
+    const_iterator constBegin(void) const { return const_iterator(data(), stride()); }
+
+          iterator end(void)            { return       iterator(data() + size(), stride()); }
+    const_iterator end(void)      const { return const_iterator(data() + size(), stride()); }
+    const_iterator cend(void)     const { return const_iterator(data() + size(), stride()); }
+    const_iterator constEnd(void) const { return const_iterator(data() + size(), stride()); }
 };
 
 // ///////////////////////////////////////////////////////////////////
@@ -163,8 +257,12 @@ public:
     View(const View& rhs);
 
 private:
+    void clear(void) {;}
     void resize(qlonglong) {;}
     void append(std::initializer_list<T>) {;}
+
+private:
+    friend class dtkDenseVector;
 };
 
 // ///////////////////////////////////////////////////////////////////
@@ -190,7 +288,11 @@ public:
     T at(const qlonglong& index) const { return dtkDenseVector<T>::at(index); }
 
     T first(void) const { return dtkDenseVector<T>::first(); }
-    T  last(void) const { return dtkDenseVector<T>::last(); }
+    T  last(void) const { return dtkDenseVector<T>::last();  }
+
+public:
+    qlonglong firstIndex(void) const { return dtkDenseVector<T>::firstIndex(); }
+    qlonglong  lastIndex(void) const { return dtkDenseVector<T>::lastIndex();  }
 
 public:
     const T& operator [] (qlonglong index) const { return dtkDenseVector<T>::operator[](index); }
@@ -204,10 +306,28 @@ public:
     const T *constData(void) const { return dtkDenseVector<T>::constData(); }
 
 public:
-    const dtkDenseVector<T>::ConstView operator() (const Range& range) const { return dtkDenseVector<T>::operator() (range); }
-    const dtkDenseVector<T>::ConstView operator() (const Range& range, qlonglong first_index) const { return dtkDenseVector<T>::operator() (range, first_index); }
+    const ConstView operator() (const Range& range) const { return dtkDenseVector<T>::operator() (range); }
+    const ConstView operator() (const Range& range, qlonglong first_index) const { return dtkDenseVector<T>::operator() (range, first_index); }
     const ConstView operator() (const Underscore& all, qlonglong first_index) const { return dtkDenseVector<T>::operator() (all, first_index); }
+
+public:
+    const_iterator begin(void)      const { return dtkDenseVector<T>::cbegin(); }
+    const_iterator cbegin(void)     const { return dtkDenseVector<T>::cbegin(); }
+    const_iterator constBegin(void) const { return dtkDenseVector<T>::cbegin(); }
+
+    const_iterator end(void)      const { return dtkDenseVector<T>::cend(); }
+    const_iterator cend(void)     const { return dtkDenseVector<T>::cend(); }
+    const_iterator constEnd(void) const { return dtkDenseVector<T>::cend(); }
 };
+
+// ///////////////////////////////////////////////////////////////////
+// Helpers
+// ///////////////////////////////////////////////////////////////////
+
+template < typename T > QDebug& operator << (QDebug debug, const dtkDenseVector<T>& vec);
+
+template < typename T > QDataStream& operator << (QDataStream& s, const dtkDenseVector<T>& vec);
+template < typename T > QDataStream& operator >> (QDataStream& s,       dtkDenseVector<T>& vec);
 
 // ///////////////////////////////////////////////////////////////////
 

@@ -26,16 +26,21 @@ private slots:
 
 private slots:
     void testCreate(void);
-    void testAssign(void);
-    void testClearAndReset(void);
+    void testClear(void);
+    void testGetValue(void);
+    void testSetValue(void);
     void testResize(void);
-    void testReserve(void);
     void testFill(void);
+    void testAppend(void);
+    void testAssign(void);
+    void testAddAssign(void);
+    void testSubAssign(void);
+    void testAssignValue(void);
+    void testScal(void);
     void testIterator(void);
-    // void testAddAssign(void);
-    // void testSubAssign(void);
-    // void testMulAssign(void);
-    // void testScalAssign(void);
+    void testData(void);
+    void testView(void);
+    void testConstView(void);
 
 private slots:
     void cleanupTestCase(void);
