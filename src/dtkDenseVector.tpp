@@ -44,7 +44,7 @@ template < typename T > inline typename dtkDenseVector<T>::FlensView& dtkDenseVe
 
 template < typename T > inline dtkDenseVector<T>::dtkDenseVector(void)
 {
-    m_engine = new Engine(0, const_cast<T *>(m_array.constData()));
+    m_engine = new Engine(0LL, NULL);
     m_view   = new FlensView(*m_engine);
 }
 
@@ -86,13 +86,10 @@ template < typename T > inline dtkDenseVector<T>::dtkDenseVector(T *data, qlongl
 
 template < typename T > inline dtkDenseVector<T>::~dtkDenseVector(void)
 {
-    if (m_view)
-        delete m_view;
+    delete m_view;
+    delete m_engine;
 
-    if (m_engine)
-        delete m_engine;
-
-    m_view    = NULL;
+    m_view   = NULL;
     m_engine = NULL;
 }
 
@@ -104,7 +101,8 @@ template < typename T > inline dtkDenseVector<T>& dtkDenseVector<T>::operator = 
 
 template < typename T > template < typename RHS > inline dtkDenseVector<T>& dtkDenseVector<T>::operator = (const flens::Vector<RHS>& rhs)
 {
-    *m_view = rhs.impl();
+    this->resize(rhs.impl().length());
+    *m_view = rhs;
     return *this;
 }
 
@@ -117,6 +115,12 @@ template < typename T > template < typename RHS > inline dtkDenseVector<T>& dtkD
 template < typename T > template < typename RHS > inline dtkDenseVector<T>& dtkDenseVector<T>::operator -= (const flens::Vector<RHS>& rhs)
 {
     *m_view -= rhs;
+    return *this;
+}
+
+template < typename T > inline dtkDenseVector<T>& dtkDenseVector<T>::operator = (const T& value)
+{
+    this->fill(value);
     return *this;
 }
 
@@ -134,7 +138,7 @@ template < typename T > template < typename S > inline typename std::enable_if<s
 
 template < typename T > inline bool dtkDenseVector<T>::empty(void) const
 {
-    return !m_view->length();
+    return !(m_view->length());
 }
 
 template < typename T > inline qlonglong dtkDenseVector<T>::size(void) const
@@ -162,15 +166,23 @@ template < typename T > inline qlonglong dtkDenseVector<T>::lastIndex(void) cons
     return m_view->lastIndex();
 }
 
+template < typename T > inline void dtkDenseVector<T>::clear(void)
+{
+    m_array.clear();
+    delete m_view;
+    delete m_engine;
+
+    m_engine = new Engine(0LL, NULL);
+    m_view   = new FlensView(*m_engine);
+}
+
 template < typename T > inline void dtkDenseVector<T>::resize(const qlonglong& size)
 {
-    if (size != this->size()) {
+    if (m_view->length() != size) {
         m_array.resize(size);
 
-        if (m_view)
-            delete m_view;
-        if (m_engine)
-            delete m_engine;
+        delete m_view;
+        delete m_engine;
 
         m_engine = new Engine(m_array.size(), m_array.data());
         m_view   = new FlensView(*m_engine);
@@ -182,10 +194,8 @@ template < typename T > inline void dtkDenseVector<T>::append(std::initializer_l
     if (list.size() > 0) {
         m_array.append(list);
 
-        if (m_view)
-            delete m_view;
-        if (m_engine)
-            delete m_engine;
+        delete m_view;
+        delete m_engine;
 
         m_engine = new Engine(m_array.size(), m_array.data());
         m_view   = new FlensView(*m_engine);
@@ -197,10 +207,8 @@ template < typename T > inline void dtkDenseVector<T>::append(const dtkDenseVect
     if (other.size() > 0) {
         m_array.append(other.m_array);
 
-        if (m_view)
-            delete m_view;
-        if (m_engine)
-            delete m_engine;
+        delete m_view;
+        delete m_engine;
 
         m_engine = new Engine(m_array.size(), m_array.data());
         m_view   = new FlensView(*m_engine);
@@ -279,28 +287,28 @@ template < typename T > inline typename dtkDenseVector<T>::View dtkDenseVector<T
 
 template < typename T > inline const typename dtkDenseVector<T>::ConstView dtkDenseVector<T>::operator() (const Range& range, qlonglong first_index) const
 {
-        qlonglong from   = range.firstIndex();
-        qlonglong to     = range.lastIndex();
-        qlonglong stride = range.stride();
+    qlonglong from   = range.firstIndex();
+    qlonglong to     = range.lastIndex();
+    qlonglong stride = range.stride();
 
-        qlonglong length = (to - from) / stride + 1;
+    qlonglong length = (to - from) / stride + 1;
 
-        const T *begin = &operator()(from);
+    const T *begin = &operator()(from);
 
-        return ConstView(begin, length, stride * this->stride(), first_index);
+    return ConstView(begin, length, stride * this->stride(), first_index);
 }
 
 template < typename T > inline typename dtkDenseVector<T>::View dtkDenseVector<T>::operator() (const Range& range, qlonglong first_index)
 {
-        qlonglong from = range.firstIndex();
-        qlonglong to   = range.lastIndex();
-        qlonglong stride = range.stride();
+    qlonglong from = range.firstIndex();
+    qlonglong to   = range.lastIndex();
+    qlonglong stride = range.stride();
 
-        qlonglong length = (to - from) / stride + 1;
+    qlonglong length = (to - from) / stride + 1;
 
-        T *begin = &operator()(from);
+    T *begin = &operator()(from);
 
-        return View(begin, length, stride * this->stride(), first_index);
+    return View(begin, length, stride * this->stride(), first_index);
 }
 
 template < typename T > inline const typename dtkDenseVector<T>::ConstView dtkDenseVector<T>::operator() (const Underscore& all, qlonglong first_index) const
@@ -344,6 +352,48 @@ template < typename T > inline dtkDenseVector<T>::ConstView::ConstView(const Con
 template < typename T > inline dtkDenseVector<T>::ConstView::ConstView(const View& rhs) : dtkDenseVector<T>(rhs.data(), rhs.size(), rhs.stride(), rhs.firstIndex())
 {
 
+}
+
+// ///////////////////////////////////////////////////////////////////
+// Helpers implementation
+// ///////////////////////////////////////////////////////////////////
+
+template < typename T > inline QDebug& operator << (QDebug debug, const dtkDenseVector<T>& vec)
+{
+    const bool oldSetting = debug.autoInsertSpaces();
+    debug.nospace() << "dtkDenseVector of size " << vec.size() << ":" << '\n';
+    debug.nospace() << "[ ";
+    if (vec.size() > 0)
+        debug << vec(1);
+    for (qlonglong i = 2; i <= vec.size(); ++i) {
+            debug << ", ";
+        debug << vec(i);
+    }
+    debug << " ]";
+    debug.setAutoInsertSpaces(oldSetting);
+    return debug.maybeSpace();
+}
+
+template < typename T > inline QDataStream& operator << (QDataStream& s, const dtkDenseVector<T>& vec)
+{
+    s << quint64(vec.size());
+    for (qlonglong i = 1; i <= vec.size(); ++i) {
+        s << vec(i);
+    }
+    return s;
+}
+
+template < typename T > inline QDataStream& operator >> (QDataStream& s, dtkDenseVector<T>& vec)
+{
+    vec.clear();
+    quint64 size; s >> size;
+    vec.resize(size);
+    T tmp;
+    for (qlonglong i = 1; i <= vec.size(); ++i) {
+        s >> tmp;
+        vec(i) = tmp;
+    }
+    return s;
 }
 
 //
